@@ -448,8 +448,20 @@ let currentFrameSize = { width: 1920, height: 1080 };
 
 function mapViewerPoint(event, frameMeta, wrapEl) {
   const rect = wrapEl.getBoundingClientRect();
-  const viewportWidth = Number(frameMeta.viewportCssWidth || frameMeta.viewport?.width || 0);
-  const viewportHeight = Number(frameMeta.viewportCssHeight || frameMeta.viewport?.height || 0);
+  const viewportWidth = Number(
+    frameMeta.viewportCssWidth
+      || frameMeta.viewport?.width
+      || frameMeta.capturePixelWidth
+      || frameMeta.capture_pixel_width
+      || 1
+  );
+  const viewportHeight = Number(
+    frameMeta.viewportCssHeight
+      || frameMeta.viewport?.height
+      || frameMeta.capturePixelHeight
+      || frameMeta.capture_pixel_height
+      || 1
+  );
   const frameSize = frameDisplaySize(frameMeta);
   const scale = Math.min(rect.width / frameSize.width, rect.height / frameSize.height);
   const renderedWidth = frameSize.width * scale;
@@ -468,8 +480,22 @@ function mapViewerPoint(event, frameMeta, wrapEl) {
 }
 
 function frameDisplaySize(frameMeta) {
-  const width = Number(frameMeta.capturePixelWidth || frameMeta.capture_pixel_width || frameMeta.viewportCssWidth || frameMeta.viewport?.width || currentFrameSize.width || 1920);
-  const height = Number(frameMeta.capturePixelHeight || frameMeta.capture_pixel_height || frameMeta.viewportCssHeight || frameMeta.viewport?.height || currentFrameSize.height || 1080);
+  const width = Number(
+    frameMeta.viewportCssWidth
+      || frameMeta.viewport?.width
+      || frameMeta.capturePixelWidth
+      || frameMeta.capture_pixel_width
+      || currentFrameSize.width
+      || 1920
+  );
+  const height = Number(
+    frameMeta.viewportCssHeight
+      || frameMeta.viewport?.height
+      || frameMeta.capturePixelHeight
+      || frameMeta.capture_pixel_height
+      || currentFrameSize.height
+      || 1080
+  );
   return {
     width: width > 0 ? width : 1920,
     height: height > 0 ? height : 1080
