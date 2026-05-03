@@ -2,8 +2,20 @@ import assert from "node:assert/strict";
 
 function mapViewerPoint(event, frameMeta, wrapEl) {
   const rect = wrapEl.getBoundingClientRect();
-  const viewportWidth = Number(frameMeta.viewportCssWidth || frameMeta.viewport?.width || 0);
-  const viewportHeight = Number(frameMeta.viewportCssHeight || frameMeta.viewport?.height || 0);
+  const viewportWidth = Number(
+    frameMeta.viewportCssWidth
+      || frameMeta.viewport?.width
+      || frameMeta.capturePixelWidth
+      || frameMeta.capture_pixel_width
+      || 1
+  );
+  const viewportHeight = Number(
+    frameMeta.viewportCssHeight
+      || frameMeta.viewport?.height
+      || frameMeta.capturePixelHeight
+      || frameMeta.capture_pixel_height
+      || 1
+  );
   const frameSize = frameDisplaySize(frameMeta);
   const scale = Math.min(rect.width / frameSize.width, rect.height / frameSize.height);
   const renderedWidth = frameSize.width * scale;
@@ -22,8 +34,20 @@ function mapViewerPoint(event, frameMeta, wrapEl) {
 }
 
 function frameDisplaySize(frameMeta) {
-  const width = Number(frameMeta.capturePixelWidth || frameMeta.capture_pixel_width || frameMeta.viewportCssWidth || frameMeta.viewport?.width || 1920);
-  const height = Number(frameMeta.capturePixelHeight || frameMeta.capture_pixel_height || frameMeta.viewportCssHeight || frameMeta.viewport?.height || 1080);
+  const width = Number(
+    frameMeta.viewportCssWidth
+      || frameMeta.viewport?.width
+      || frameMeta.capturePixelWidth
+      || frameMeta.capture_pixel_width
+      || 1920
+  );
+  const height = Number(
+    frameMeta.viewportCssHeight
+      || frameMeta.viewport?.height
+      || frameMeta.capturePixelHeight
+      || frameMeta.capture_pixel_height
+      || 1080
+  );
   return {
     width: width > 0 ? width : 1920,
     height: height > 0 ? height : 1080,
@@ -83,6 +107,13 @@ const cases = [
     meta: { viewportCssWidth: 1000, viewportCssHeight: 500, capturePixelWidth: 2000, capturePixelHeight: 1000 },
     event: { clientX: 250, clientY: 125 },
     expected: { x: 250, y: 125 },
+  },
+  {
+    name: "capture size only falls back to capture for mapping",
+    rect: { left: 0, top: 0, width: 1000, height: 500 },
+    meta: { capturePixelWidth: 2000, capturePixelHeight: 1000 },
+    event: { clientX: 250, clientY: 125 },
+    expected: { x: 500, y: 250 },
   },
   {
     name: "snake case capture dimensions keep css coordinates",

@@ -96,13 +96,13 @@ async fn page_title(page: &Page) -> String {
         .unwrap_or_default()
 }
 
-async fn frame_message(
+async fn build_frame_message(
     page: &Page,
     data: String,
+    viewport: &ViewportInfo,
     pixel_width: u32,
     pixel_height: u32,
 ) -> FrameMessage {
-    let viewport = viewport_info(page, pixel_width, pixel_height).await;
     let capture_scale_x = if viewport.width == 0 {
         1.0
     } else {
@@ -126,9 +126,19 @@ async fn frame_message(
         capture_scale_y,
         url: page_url(page).await,
         title: page_title(page).await,
-        viewport,
+        viewport: viewport.clone(),
         timestamp: crate::daemon::narration::events::now_ms(),
     }
+}
+
+async fn frame_message(
+    page: &Page,
+    data: String,
+    pixel_width: u32,
+    pixel_height: u32,
+) -> FrameMessage {
+    let viewport = viewport_info(page, pixel_width, pixel_height).await;
+    build_frame_message(page, data, &viewport, pixel_width, pixel_height).await
 }
 
 pub async fn run_capture_loop(
@@ -188,6 +198,7 @@ pub async fn run_capture_loop(
                 if frames_tx.receiver_count() == 0 {
                     continue;
                 }
+                let fallback_viewport = viewport_info(&page, 1920, 1080).await;
                 let params = CaptureScreenshotParams::builder()
                     .format(CaptureScreenshotFormat::Jpeg)
                     .quality(65)
@@ -198,7 +209,14 @@ pub async fn run_capture_loop(
                     continue;
                 };
                 let data: String = resp.result.data.clone().into();
-                let msg = frame_message(&page, data, 1920, 1080).await;
+                let msg = build_frame_message(
+                    &page,
+                    data,
+                    &fallback_viewport,
+                    fallback_viewport.width,
+                    fallback_viewport.height,
+                )
+                .await;
                 record_frame_metadata(&daemon_state, &msg).await;
                 let _ = frames_tx.send(msg);
             }
